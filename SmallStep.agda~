@@ -1,0 +1,49 @@
+module SmallStep where
+
+ import Data.Bool as Bool using (not)
+ open import Data.Bool hiding (not; if_then_else_)
+ open import Data.Empty
+ open import Data.Fin using (Fin; suc; zero; #_)
+ open import Data.Nat 
+ open import Data.Nat.Properties
+ open import Data.Vec 
+ open import Function
+ open import Relation.Binary.PropositionalEquality
+ open import Relation.Nullary
+ open import Data.Unit hiding (_≤?_)
+ open import Data.Product
+ open import Data.Maybe
+ import Level as L
+ 
+ open import Grammar
+ open import Decidable
+ --infixr 5 _∷_
+
+ -- Derivaciones con un número especifico de pasos
+ ⟨_,_⟩_↦_ : ∀ {n} → Stm n → State n → ℕ → State n → Set
+ ⟨_,_⟩_↦_ s σ n σ₁ = ⟨ s , σ ⟩ n ↦[ nothing , σ₁ ]
+
+ ⟨_,_⟩_↦⟨_,_⟩ : ∀ {n} → Stm n → State n → ℕ → Stm n → State n → Set
+ ⟨_,_⟩_↦⟨_,_⟩ s₁ σ n s₂ σ₁ = ⟨ s , σ ⟩ n ↦[ just s₂ , σ₁ ]
+
+ -- Derivaciones con un número arbitrarío de pasos
+ ⟨_,_⟩↦*_ : ∀ {n} → Stm n → State n → State n → Set
+ ⟨_,_⟩↦*_ s σ σ₁ = ∃ λ n → ⟨ s , σ ⟩ n ↦[ noting , σ₁ ]
+
+ ⟨_,_⟩↦*⟨_,_⟩ : ∀ {n} → Stm n → State n → Stm n → state n → Set
+ ⟨_,_⟩↦*⟨_,_⟩ s₁ σ s₂ σ₁ = ∃ λ n → ⟨ s , σ ⟩ n ↦[ just s₂ , σ₁ ]
+
+ -- Un paso de derivación
+ ⟨_,_⟩↦_ : ∀ {n} → Stm n → State n → State n → Set
+ ⟨_,_⟩↦_ s σ σ₁ = ⟨ s , σ ⟩↦[ nothing , σ₁ ]
+
+ ⟨_,_⟩↦⟨_,_⟩ : ∀ {n} → Stm n → State n → Stm n → State n → Set
+ ⟨_,_⟩↦⟨_,_⟩ s₁ σ s₂ σ₁ = ⟨ s₁ , σ ⟩↦[ just s₂ , σ₁ ]
+
+-- definimos las relgas de semántica operacional de paso pequeño
+ data ⟨_,_⟩↦[_,_] {n : ℕ} : Stm n → State n → Maybe (Stm n) → State n → Set where
+   assS : ∀ {x a σ} → ⟨ x := a , σ ⟩↦ (σ [ x ]≔ ⟦ a ⟧ᵉ σ)
+   skipS : ∀ {σ} → ⟨ skip , σ ⟩↦ σ
+   _,_S1 :∀ {s₁ s₂ s₁' σ σ₁} → ⟨ s₁ , σ ⟩↦⟨ s₁' , σ₁ ⟩ → ⟨ (s₁ , s₂) , σ ⟩↦⟨ (s₁ , s₂) , σ₁⟩
+
+ data ⟨_,_⟩_↦[_,_] {n : ℕ} : Stm n → State n → ℕ → Maybe (Stm n) → State n → Set where

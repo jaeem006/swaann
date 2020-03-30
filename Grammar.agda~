@@ -1,0 +1,32 @@
+module Grammar where
+
+ open import Data.Nat
+ open import Data.Bool
+ open import Data.String
+ open import Data.List
+ open import Data.Vec
+
+ -- Definimos los tipos del lenguaje WHILE
+ 
+ -- Notemos que estamos utilzando Naturales en lugar de Enteros pues facilita las demostraciones
+ -- y manejar enteros en Agda no es trivial.
+
+ data Type : Set where
+   nat bool : Type
+
+ -- Se definen las interpretaciones de los valores del lenguaje WHILEa naturales y booleanos
+ -- de Agda
+ ⟦_⟧ᵗ : Type → Set
+ ⟦ nat  ⟧ᵗ = ℕ
+ ⟦ bool ⟧ᵗ = Bool
+ 
+ -- Para representar los estados usamos indices de deBruijn y vectores, el valor de la variable n
+ -- es el valor que se encuentre en el inidce n del vector
+
+ State : ℕ → Set 
+ State = Vec ℕ
+
+ -- Está es una bonita forma de hacer sinónimos en Agda.
+
+ data AE (n : ℕ) : Type → where
+      num : ℕ → Exp n nat
