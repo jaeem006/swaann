@@ -29,7 +29,7 @@ module Grammar where
  -- es el valor que se encuentre en el inidce n del vector
 
  State : ℕ → Set 
- State = Vec ℕ 
+ State = Vec ℕ
 
  -- Está es una bonita forma de hacer sinónimos en Agda.
 

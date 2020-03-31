@@ -19,7 +19,6 @@ open import Grammar
 open import Decidable
 open import NatLemmas
 
-infixr 5 _∷_
 mutual
 --Mutual es importante para avisarle a Agda que habra recursión mutua
 
@@ -48,9 +47,8 @@ mutual
  data ⟨_,_⟩↦[_,_] {n : ℕ} : Stm n → State n → Maybe (Stm n) → State n → Set where
    assS : ∀ {x a σ} → ⟨ x := a , σ ⟩↦ (σ [ x ]≔ ⟦ a ⟧ᵉ σ)
    skipS : ∀ {σ} → ⟨ skip , σ ⟩↦ σ
-   compS1 : ∀ {s₁ s₂ s₁' σ σ₁} → ⟨ s₁ , σ ⟩↦⟨ s₁' , σ₁ ⟩ →
-             ⟨ (s₁ , s₂) , σ ⟩↦⟨ (s₁ , s₂) , σ₁ ⟩
-   compS2 : ∀ {s₁ s₂ σ σ₁} → ⟨ s₁ , σ ⟩↦ σ₁ → ⟨ (s₁ , s₂) , σ ⟩↦⟨ s₂ , σ₁ ⟩
+   compS1 : ∀ {s₁ s₂ s₁' σ σ₁} → ⟨ s₁ , σ ⟩↦⟨ s₁' , σ₁ ⟩ → ⟨ (s₁ , s₂) , σ ⟩↦⟨ (s₁' , s₂) , σ₁ ⟩
+   compS2 : ∀ {s₁ s₂ σ σ₁} → ⟨ s₁ , σ ⟩↦ σ₁  → ⟨ (s₁ , s₂) , σ ⟩↦⟨ s₂ , σ₁ ⟩
    if-TS : ∀ {s₁ s₂ σ b} → T (⟦ b ⟧ᵉ σ) → ⟨ if b then s₁ else s₂ , σ ⟩↦⟨ s₁ , σ ⟩
    if-FS : ∀ {s₁ s₂ σ b} → F (⟦ b ⟧ᵉ σ) → ⟨ if b then s₁ else s₂ , σ ⟩↦⟨ s₂ , σ ⟩
    -- whileS : ∀ {s σ b} → ⟨ while b [ s ] , σ ⟩↦⟨ (if b then (s , while b [ s ]) else skip) , σ ⟩
@@ -64,9 +62,30 @@ mutual
    _::_ : ∀ {s₁ s₂ s₃ σ σ₁ σ₂ k} → ⟨ s₁ , σ ⟩↦⟨ s₂ , σ₁ ⟩ → ⟨ s₂ , σ₁ ⟩ k ↦[ s₃ , σ₂ ]
           → ⟨ s₁ , σ ⟩ suc k ↦[ s₃ , σ₂ ]
 
- -- detS : ∀ {n}{s : Stm n}{s' s'' σ σ₁ σ₂} →
- --                  ⟨ s , σ ⟩↦[ s' , σ₁ ] →
- --                  ⟨ s , σ ⟩↦[ s'' , σ₂ ] →
- --                  s' ≡ s'' × σ₁ ≡ σ₂
- --
- -- detS a b = ?
+ detS : ∀ {n}{s : Stm n}{s' s'' σ σ₁ σ₂} →
+                   ⟨ s , σ ⟩↦[ s' , σ₁ ] →
+                   ⟨ s , σ ⟩↦[ s'' , σ₂ ] →
+                   s' ≡ s'' × σ₁ ≡ σ₂
+
+ detS assS assS = refl , refl
+ detS skipS skipS = refl , refl
+ detS (compS1 x) (compS1 x₁) with detS x x₁
+ ...| refl , refl = refl , refl
+ detS (compS1 x) (compS2 x₁) with detS x x₁
+ ...| () , _ 
+ detS (compS2 x) (compS1 x₁) with detS x x₁
+ ...| () , _
+ detS (compS2 x) (compS2 x₁) with detS x x₁
+ ...| refl , refl = refl , refl
+ detS {n} (if-TS x) (if-TS x₁) = refl , refl 
+ detS {n} (if-TS x) (if-FS x₁)
+   rewrite T→≡true x = (⊥-elim x₁) , refl
+ detS (if-FS x) (if-TS x₁)
+   rewrite T→≡true x₁ = ⊥-elim x
+ detS (if-FS x) (if-FS x₁) = refl , refl
+ detS (while-TS x) (while-TS x₁) = refl , refl
+ detS (while-TS x) (while-FS x₁)
+   rewrite T→≡true x = ⊥-elim x₁
+ detS (while-FS x) (while-TS x₁)
+   rewrite T→≡true x₁ = ⊥-elim x
+ detS (while-FS x) (while-FS x₁) = refl , refl
